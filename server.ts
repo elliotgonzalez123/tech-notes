@@ -6,9 +6,33 @@ import Fastify, {
 import fastifyStatic from "@fastify/static";
 import { RootRoute } from "./routes/root";
 import path from "path";
-import { request } from "http";
+import cors from "@fastify/cors";
+import { corsOptions } from "./config/corsOptions";
 
-const fastify: FastifyInstance = Fastify({ logger: true });
+type Environment = "development" | "production" | "test";
+
+const envToLogger = {
+  development: {
+    transport: {
+      target: "pino-pretty",
+      options: {
+        translateTime: "HH:MM:ss Z",
+        ignore: "pid,hostname",
+      },
+    },
+  },
+  production: true,
+  test: false,
+};
+
+// const environment: Environment = process.env.NODE_ENV as Environment;
+const environment: Environment = "development";
+
+const fastify: FastifyInstance = Fastify({
+  logger: envToLogger[environment] ?? true,
+});
+
+fastify.register(cors, corsOptions);
 
 fastify.register(fastifyStatic, {
   root: path.join(__dirname, "public"),
