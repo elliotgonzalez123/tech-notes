@@ -1,0 +1,25 @@
+{
+  "name": "tech-notes",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server",
+    "dev": "nodemon --exec ts-node server.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/static": "^6.10.2",
+    "fastify": "^4.17.0",
+    "fastify-cli": "^5.7.1",
+    "fastify-plugin": "^4.5.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.2.4",
+    "nodemon": "^2.0.22"
+  }
+}
