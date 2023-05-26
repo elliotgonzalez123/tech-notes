@@ -1,3 +1,4 @@
+import { config } from "dotenv";
 import Fastify, {
   FastifyInstance,
   FastifyReply,
@@ -8,6 +9,8 @@ import { RootRoute } from "./routes/root";
 import path from "path";
 import cors from "@fastify/cors";
 import { corsOptions } from "./config/corsOptions";
+
+config();
 
 type Environment = "development" | "production" | "test";
 
@@ -25,8 +28,7 @@ const envToLogger = {
   test: false,
 };
 
-// const environment: Environment = process.env.NODE_ENV as Environment;
-const environment: Environment = "development";
+const environment: Environment = process.env.NODE_ENV as Environment;
 
 const fastify: FastifyInstance = Fastify({
   logger: envToLogger[environment] ?? true,
