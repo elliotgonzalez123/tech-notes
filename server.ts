@@ -9,6 +9,8 @@ import { RootRoute } from "./routes/root";
 import path from "path";
 import cors from "@fastify/cors";
 import { corsOptions } from "./config/corsOptions";
+import prisma from "./utils/prisma";
+import UserRoutes from "./routes/userRoutes";
 
 config();
 
@@ -38,10 +40,10 @@ fastify.register(cors, corsOptions);
 
 fastify.register(fastifyStatic, {
   root: path.join(__dirname, "public"),
-  //   prefix: "/views/", // optional: default '/'
 });
 
 fastify.register(RootRoute, { prefix: "/" });
+fastify.register(UserRoutes, { prefix: "/users" });
 
 fastify.setNotFoundHandler((request: FastifyRequest, reply: FastifyReply) => {
   if (request.headers.accept?.includes("text/html")) {
@@ -65,6 +67,7 @@ const exitHandler = async (signal: NodeJS.Signals) => {
   console.log(`Received signal to terminate: ${signal}`);
 
   await fastify.close();
+  await prisma.$disconnect();
   process.exit(0);
 };
 

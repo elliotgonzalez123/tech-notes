@@ -20,7 +20,7 @@ model User {
   id        String   @id @default(cuid())
   username  String   @unique
   password  String
-  active    Boolean
+  active    Boolean  @default(true)
   role      Role     @default(EMPLOYEE)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
