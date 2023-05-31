@@ -11,6 +11,7 @@ import cors from "@fastify/cors";
 import { corsOptions } from "./config/corsOptions";
 import prisma from "./utils/prisma";
 import UserRoutes from "./routes/userRoutes";
+import NotesRoutes from "./routes/notesRoutes";
 
 config();
 
@@ -44,6 +45,7 @@ fastify.register(fastifyStatic, {
 
 fastify.register(RootRoute, { prefix: "/" });
 fastify.register(UserRoutes, { prefix: "/users" });
+fastify.register(NotesRoutes, { prefix: "/notes" });
 
 fastify.setNotFoundHandler((request: FastifyRequest, reply: FastifyReply) => {
   if (request.headers.accept?.includes("text/html")) {

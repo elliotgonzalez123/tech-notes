@@ -1,8 +1,11 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import prisma from "../utils/prisma";
 import bcrypt from "bcrypt";
-
-const acceptedRoles = ["EMPLOYEE", "ADMIN", "MANAGER"];
+import {
+  CreateNewUserType,
+  UpdateUserType,
+  DeleteUserType,
+} from "../schemas/userSchemas";
 
 //@desc Get all users
 //@route GET /users
@@ -36,11 +39,7 @@ export const getAllUsers = async (
 
 export const createNewUser = async (
   request: FastifyRequest<{
-    Body: {
-      username: string;
-      password: string;
-      role: "EMPLOYEE" | "ADMIN" | "MANAGER";
-    };
+    Body: CreateNewUserType;
   }>,
   reply: FastifyReply
 ) => {
@@ -53,10 +52,6 @@ export const createNewUser = async (
 
   if (duplicate.length) {
     return reply.code(409).send({ message: "Duplicate user name" });
-  }
-
-  if (!acceptedRoles.includes(role)) {
-    return reply.code(400).send({ message: "Invalid role name" });
   }
 
   //Hash password
@@ -84,13 +79,7 @@ export const createNewUser = async (
 
 export const updateUser = async (
   request: FastifyRequest<{
-    Body: {
-      id: string;
-      username: string;
-      password?: string;
-      role: "EMPLOYEE" | "ADMIN" | "MANAGER";
-      active: boolean;
-    };
+    Body: UpdateUserType;
   }>,
   reply: FastifyReply
 ) => {
@@ -102,27 +91,26 @@ export const updateUser = async (
     },
   });
 
-  const duplicate = await prisma.user.findUnique({
-    where: {
-      username: username,
-    },
-  });
-
   if (!user) {
     return reply.code(400).send({ message: "User not found" });
   }
 
-  if (duplicate) {
-    return reply.code(409).send({ message: "Duplicate user name" });
+  //Check if a username is provided, then check if its already in use
+  if (username) {
+    const duplicate = await prisma.user.findUnique({
+      where: {
+        username: username,
+      },
+    });
+    if (duplicate) {
+      return reply.code(409).send({ message: "Duplicate user name" });
+    }
   }
 
-  user.username = username;
-  user.role = role;
-  user.active = active;
-
-  if (password) {
-    user.password = await bcrypt.hash(password, 10);
-  }
+  if (active) user.active = active;
+  if (role) user.role = role;
+  if (username) user.username = username;
+  if (password) user.password = await bcrypt.hash(password, 10);
 
   const updatedUser = await prisma.user.update({
     where: {
@@ -140,9 +128,7 @@ export const updateUser = async (
 
 export const deleteUser = async (
   request: FastifyRequest<{
-    Body: {
-      id: string;
-    };
+    Body: DeleteUserType;
   }>,
   reply: FastifyReply
 ) => {
