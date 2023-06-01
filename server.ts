@@ -1,9 +1,11 @@
 import { config } from "dotenv";
 import Fastify, {
+  FastifyError,
   FastifyInstance,
   FastifyReply,
   FastifyRequest,
 } from "fastify";
+import fastifyRateLimit from "@fastify/rate-limit";
 import fastifyStatic from "@fastify/static";
 import { RootRoute } from "./routes/root";
 import path from "path";
@@ -12,6 +14,9 @@ import { corsOptions } from "./config/corsOptions";
 import prisma from "./utils/prisma";
 import UserRoutes from "./routes/userRoutes";
 import NotesRoutes from "./routes/notesRoutes";
+import AuthRoutes from "./routes/authRoutes";
+import jwtAuthPlugin from "./plugins";
+import fastifyRedis = require("@fastify/redis");
 
 config();
 
@@ -33,20 +38,53 @@ const envToLogger = {
 
 const environment: Environment = process.env.NODE_ENV as Environment;
 
-const fastify: FastifyInstance = Fastify({
+export const fastify: FastifyInstance = Fastify({
   logger: envToLogger[environment] ?? true,
 });
 
+//cors
 fastify.register(cors, corsOptions);
 
+//rate limiter applied to /auth routes
+fastify.register(fastifyRateLimit, {
+  global: false,
+  max: 5,
+  timeWindow: "1 minute",
+  errorResponseBuilder(req, context) {
+    return {
+      code: 429,
+      error: "Too many requests",
+      message:
+        "Too many login attempts from this IP, please try again after a 60 second pause",
+      date: Date.now(),
+      expiresIn: context.ttl,
+    };
+  },
+});
+
+//auth "middleware" (plugin)
+fastify.register(jwtAuthPlugin);
+
+//redis for refresh_token rotation
+fastify.register(fastifyRedis, {
+  host: process.env.REDISHOST!,
+  password: process.env.REDISPASSWORD!,
+  port: 5670,
+  url: process.env.REDIS_URL!,
+});
+
+//static files
 fastify.register(fastifyStatic, {
   root: path.join(__dirname, "public"),
 });
 
+//routes
 fastify.register(RootRoute, { prefix: "/" });
 fastify.register(UserRoutes, { prefix: "/users" });
 fastify.register(NotesRoutes, { prefix: "/notes" });
+fastify.register(AuthRoutes, { prefix: "/auth" });
 
+//404
 fastify.setNotFoundHandler((request: FastifyRequest, reply: FastifyReply) => {
   if (request.headers.accept?.includes("text/html")) {
     reply.code(404).sendFile("views/404.html");
@@ -55,6 +93,7 @@ fastify.setNotFoundHandler((request: FastifyRequest, reply: FastifyReply) => {
   }
 });
 
+//start server
 const start = async () => {
   try {
     await fastify.listen({ port: 4000, host: "0.0.0.0" });
@@ -70,6 +109,7 @@ const exitHandler = async (signal: NodeJS.Signals) => {
 
   await fastify.close();
   await prisma.$disconnect();
+  fastify.redis.disconnect();
   process.exit(0);
 };
 

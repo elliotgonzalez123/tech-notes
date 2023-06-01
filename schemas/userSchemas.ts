@@ -4,7 +4,7 @@ import zodToJsonSchema from "zod-to-json-schema";
 const createNewUserBodySchema = z.object({
   username: z.string(),
   password: z.string(),
-  role: z.enum(["EMPLOYEE", "ADMIN", "MANAGER"]),
+  role: z.enum(["EMPLOYEE", "ADMIN", "MANAGER"]).optional(),
 });
 
 const updateUserBodySchema = z.object({

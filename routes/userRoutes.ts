@@ -12,7 +12,7 @@ import {
 } from "../schemas/userSchemas";
 
 async function UserRoutes(fastify: FastifyInstance) {
-  fastify.get("/", getAllUsers);
+  fastify.get("/", { preHandler: [fastify.authenticate] }, getAllUsers);
   fastify.post("/", { schema: createNewUserJsonSchema }, createNewUser);
   fastify.patch("/", { schema: updateUserJsonSchema }, updateUser);
   fastify.delete("/", { schema: deleteUserJsonSchema }, deleteUser);

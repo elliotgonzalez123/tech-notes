@@ -6,6 +6,7 @@ import {
   UpdateUserType,
   DeleteUserType,
 } from "../schemas/userSchemas";
+import { applicationRoles } from "../lib/allowedRoles";
 
 //@desc Get all users
 //@route GET /users
@@ -15,12 +16,15 @@ export const getAllUsers = async (
   request: FastifyRequest,
   reply: FastifyReply
 ) => {
+  if (request.user.role !== applicationRoles.ADMIN) {
+    return reply.status(403).send({ message: "Forbidden" });
+  }
+
   const users = await prisma.user.findMany({
     select: {
       id: true,
       username: true,
       active: true,
-      notes: true,
       role: true,
       createdAt: true,
       updatedAt: true,
@@ -44,6 +48,9 @@ export const createNewUser = async (
   reply: FastifyReply
 ) => {
   const { username, password, role } = request.body;
+  if (request.user.role !== applicationRoles.ADMIN) {
+    return reply.status(403).send({ message: "Forbidden" });
+  }
   const duplicate = await prisma.user.findMany({
     where: {
       username: username,
@@ -84,6 +91,9 @@ export const updateUser = async (
   reply: FastifyReply
 ) => {
   const { id, username, password, role, active } = request.body;
+  if (request.user.role !== applicationRoles.ADMIN) {
+    return reply.status(403).send({ message: "Forbidden" });
+  }
 
   const user = await prisma.user.findUnique({
     where: {
@@ -133,6 +143,9 @@ export const deleteUser = async (
   reply: FastifyReply
 ) => {
   const { id } = request.body;
+  if (request.user.role !== applicationRoles.ADMIN) {
+    return reply.status(403).send({ message: "Forbidden" });
+  }
   const notes = await prisma.note.findMany({
     where: {
       userId: id,

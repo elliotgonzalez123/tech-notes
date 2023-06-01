@@ -4,7 +4,7 @@ import zodToJsonSchema from "zod-to-json-schema";
 const createNewNoteBodySchema = z.object({
   title: z.string(),
   text: z.string(),
-  userId: z.string(),
+  userId: z.string().optional(),
 });
 
 const updateNoteBodySchema = z.object({

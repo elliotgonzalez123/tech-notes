@@ -5,6 +5,7 @@ import {
   UpdateNoteType,
   DeleteNoteType,
 } from "../schemas/notesSchemas";
+import { applicationRoles } from "../lib/allowedRoles";
 
 //@desc Get all notes
 //@route GET /notes
@@ -14,9 +15,20 @@ export const getAllNotes = async (
   request: FastifyRequest,
   reply: FastifyReply
 ) => {
-  const notes = await prisma.note.findMany();
+  if (request.user.role === applicationRoles.ADMIN) {
+    const notes = await prisma.note.findMany();
+    if (!notes || !notes.length)
+      return reply.code(400).send({ message: "No notes found" });
 
-  if (!notes || !notes.length) {
+    return reply.send(notes);
+  }
+  const notes = await prisma.note.findMany({
+    where: {
+      userId: request.user.id,
+    },
+  });
+
+  if (!notes || !notes.length || !notes) {
     return reply.code(400).send({ message: "No notes found" });
   }
 
@@ -34,14 +46,31 @@ export const createNewNote = async (
   reply: FastifyReply
 ) => {
   const { title, text, userId } = request.body;
+  if (request.user.role === applicationRoles.ADMIN) {
+    if (!userId)
+      return reply.code(400).send({ message: "Must include userId" });
+    const newNote = await prisma.note.create({
+      data: {
+        title,
+        text,
+        userId,
+      },
+    });
+    if (newNote) {
+      return reply
+        .code(201)
+        .send({ message: `New note ${newNote.title} created` });
+    } else {
+      return reply.code(400).send({ message: "Invalid note data received" });
+    }
+  }
   const newNote = await prisma.note.create({
     data: {
       title,
       text,
-      userId,
+      userId: request.user.id,
     },
   });
-
   if (newNote) {
     return reply
       .code(201)
