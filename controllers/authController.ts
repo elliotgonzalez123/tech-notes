@@ -24,7 +24,7 @@ export const login = async (
     return reply.code(401).send({ message: "Unauthorized" });
   }
 
-  const match = bcrypt.compare(password, foundUser.password);
+  const match = await bcrypt.compare(password, foundUser.password);
   if (!match) {
     return reply.code(401).send({ message: "Unauthorized" });
   }

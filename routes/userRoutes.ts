@@ -9,13 +9,28 @@ import {
   createNewUserJsonSchema,
   updateUserJsonSchema,
   deleteUserJsonSchema,
+  CreateNewUserType,
+  UpdateUserType,
+  DeleteUserType,
 } from "../schemas/userSchemas";
 
 async function UserRoutes(fastify: FastifyInstance) {
   fastify.get("/", { preHandler: [fastify.authenticate] }, getAllUsers);
-  fastify.post("/", { schema: createNewUserJsonSchema }, createNewUser);
-  fastify.patch("/", { schema: updateUserJsonSchema }, updateUser);
-  fastify.delete("/", { schema: deleteUserJsonSchema }, deleteUser);
+  fastify.post<{ Body: CreateNewUserType }>(
+    "/",
+    { preHandler: [fastify.authenticate], schema: createNewUserJsonSchema },
+    createNewUser
+  );
+  fastify.patch<{ Body: UpdateUserType }>(
+    "/",
+    { preHandler: [fastify.authenticate], schema: updateUserJsonSchema },
+    updateUser
+  );
+  fastify.delete<{ Body: DeleteUserType }>(
+    "/",
+    { preHandler: [fastify.authenticate], schema: deleteUserJsonSchema },
+    deleteUser
+  );
 }
 
 export default UserRoutes;

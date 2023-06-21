@@ -165,6 +165,10 @@ export const deleteUser = async (
     return reply.code(400).send({ message: "User not found" });
   }
 
+  if (user.id === request.user.id) {
+    return reply.code(400).send({ message: "You cannot delete yourself!" });
+  }
+
   const result = await prisma.user.delete({
     where: {
       id: id,
